@@ -25,7 +25,7 @@ class FoodChain:
 		self.lion.move()
 		self.sheep.look(self._get_game_objects())
 		self.lion.look(self._get_game_objects())
-		print(self.sheep.sensores)
+		self.sheep.think()
 
 	def _draw(self):
 		self.screen.fill((255, 255, 255))

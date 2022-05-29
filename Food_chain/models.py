@@ -24,7 +24,7 @@ class GameObject:
 		self.rect = Rect(position, size)
 		self.color = color
 		self.velocity = velocity
-		self.direction = (0, 0)
+		self.direction = [0, 0]
 		self.sensores = [None for _ in range(self.QTD_SENSORES)]
 		self.drawSensores = [None for _ in range(self.QTD_SENSORES)]
 		self.angle = 0
@@ -33,42 +33,54 @@ class GameObject:
 	def draw(self, surface):
 		draw.circle(surface, self.color, self.rect.center, self.rect.width/2)
 		for sensor in self.drawSensores:
+			print(sensor)
 			draw.line(surface, (0, 0, 0), sensor[0], sensor[1])
 
 	def move(self):
-		self.direction = self.velocity, self.velocity
 		self.rect = self.rect.move(self.direction)
+		self.direction = [0, 0]
 
 	def look(self, game_objects):
-		objects = game_objects[:]
-		objects.remove(self)
-		rects = []
-		for i in objects:
-			rects.append(i.rect)
-		
-		for i in range(self.QTD_SENSORES):
-			vision = Rect(0, 0, self.rect.height/5, self.rect.height/5)
-			a = self.angle - 90 + i * 180 / (self.QTD_SENSORES - 1)
-			direction = math.cos(a*math.pi/180.0), math.sin(a*math.pi/180.0)
-			dist = 0
-			object = None
-			pos_float = [self.rect.centerx, self.rect.centery]
-			while dist <= 150:
-				pos_float[0] += direction[0]
-				pos_float[1] += direction[1]
-				vision.x = pos_float[0]
-				vision.y = pos_float[1]
-				dist = distPoints(self.rect, vision)
-				index = vision.collidelist(rects)
-				if index != -1:
-					object = type(objects[index])
-					break
-			self.drawSensores[i] = (self.rect.centerx, self.rect.centery), (vision.x, vision.y)
-			self.sensores[i] = dist, object
+		if self.brain:
+			objects = game_objects[:]
+			objects.remove(self)
+			rects = []
+			for i in objects:
+				rects.append(i.rect)
+			
+			for i in range(self.QTD_SENSORES):
+				vision = Rect(0, 0, self.rect.height/5, self.rect.height/5)
+				a = self.angle - 90 + i * 180 / (self.QTD_SENSORES - 1)
+				direction = math.cos(a*math.pi/180.0), math.sin(a*math.pi/180.0)
+				dist = 0
+				tp = 0
+				pos_float = [self.rect.centerx, self.rect.centery]
+				while dist <= 150:
+					pos_float[0] += direction[0]
+					pos_float[1] += direction[1]
+					vision.x = pos_float[0]
+					vision.y = pos_float[1]
+					dist = distPoints(self.rect, vision)
+					index = vision.collidelist(rects)
+					if index != -1:
+						types = ['', 'Grass', 'Bambi', 'Lion']
+						for i in range(1, len(types)):
+							if isinstance(objects[index], types[i]):
+								tp = i
+								break
+						break
+				self.drawSensores[i] = (self.rect.centerx, self.rect.centery), (vision.x, vision.y)
+				self.sensores[i] = dist, tp
 
 	def think(self):
-		entrada = self.sensores
-		return entrada
+		if self.brain:
+			entrada = []
+			for s in self.sensores:
+				entrada.append(s[0])
+				entrada.append(s[1])
+			saida = self.feedforward(entrada)
+			print(saida)
+			
 
 	def collides_with(self, others_obj):
 		self.rect.collidelist(others_obj)
